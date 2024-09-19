@@ -5,7 +5,7 @@ Go Buddy is a command-line tool designed to interact with the Buddy CI/CD Platfo
 ## Installation
 
 ```
-go install https://github.com/JacobAndrewSmith92/gobuddy@latest
+go install github.com/JacobAndrewSmith92/gobuddy@latest
 ```
 
 
