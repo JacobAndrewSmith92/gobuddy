@@ -2,7 +2,9 @@ package util
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 )
 
@@ -32,4 +34,39 @@ func GetBranch() (string, error) {
 		return "", fmt.Errorf("not a git repository")
 	}
 	return getCurrentBranch()
+}
+
+func GetLocal() (string, error) {
+	if !checkIfGitRepo() {
+		return "", fmt.Errorf("not a git repository")
+	}
+	return GetCurrentDirectoryName()
+}
+
+// GetBranchAndDirectory returns the current branch and directory name
+func GetBranchAndDirectory() (string, string, error) {
+	if !checkIfGitRepo() {
+		return "", "", fmt.Errorf("not a git repository")
+	}
+	branch, err := getCurrentBranch()
+	if err != nil {
+		return "", "", err
+	}
+	directory, err := GetCurrentDirectoryName()
+	if err != nil {
+		return "", "", err
+	}
+	return branch, directory, nil
+}
+
+// GetCurrentDirectoryName returns the name of the current directory
+func GetCurrentDirectoryName() (string, error) {
+	// Get the current working directory
+	currentPath, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+
+	// Extract the base (last element) of the path
+	return filepath.Base(currentPath), nil
 }

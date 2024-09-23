@@ -20,7 +20,7 @@ type ProjectResponse struct {
 	Projects []Project `json:"projects"` // This contains the array of Project objects
 }
 
-// The Project struct that you already have
+// The Project struct
 type Project struct {
 	Name        string `json:"name"`
 	DisplayName string `json:"display_name"`
@@ -45,7 +45,7 @@ type Branch struct {
 type PipelineResponse struct {
 	URL       string     `json:"url"`
 	HTMLURL   string     `json:"html_url"`
-	Pipelines []Pipeline `json:"pipelines"` // This contains the array of Pipeline objects
+	Pipelines []Pipeline `json:"pipelines"`
 }
 
 // Pipeline struct to represent an individual Git branch

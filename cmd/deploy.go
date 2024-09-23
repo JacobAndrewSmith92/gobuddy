@@ -42,16 +42,18 @@ var deployCmd = &cobra.Command{
 		}
 
 		if currentFlag {
-			branch, err = util.GetBranch()
+			branch, project, err = util.GetBranchAndDirectory()
 			if err != nil {
 				log.Fatalf("Error: %v", err)
 			}
-			log.Printf("Using current branch: %s\n", branch)
+			log.Printf("Using current project %s and branch: %s\n", project, branch)
 		}
 
-		if len(args) > 0 {
-			project = args[0]
-			fmt.Printf("Looking up project passed as argument: %s\n", project)
+		if len(args) > 0 || (currentFlag && project != "") {
+			if project == "" {
+				project = args[0]
+			}
+			fmt.Printf("Looking up project: %s\n", project)
 			projectFound, err := apiClient.FetchProjectByName(project)
 			if err != nil {
 				log.Fatalf("Error: %v", err)
