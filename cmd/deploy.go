@@ -7,6 +7,7 @@ import (
 	"time"
 
 	buddy "github.com/JacobAndrewSmith92/gobuddy/internal"
+	"github.com/JacobAndrewSmith92/gobuddy/internal/util"
 	"github.com/fatih/color"
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
@@ -18,6 +19,7 @@ import (
 
 var branchFlag string
 var pipelineFlag string
+var currentFlag bool
 
 // deployCmd represents the deploy command
 var deployCmd = &cobra.Command{
@@ -39,9 +41,19 @@ var deployCmd = &cobra.Command{
 			log.Fatalf("Error creating api client: %v", err)
 		}
 
-		if len(args) > 0 {
-			project = args[0]
-			fmt.Printf("Looking up project passed as argument: %s\n", project)
+		if currentFlag {
+			branch, project, err = util.GetBranchAndDirectory()
+			if err != nil {
+				log.Fatalf("Error: %v", err)
+			}
+			log.Printf("Using current project %s and branch: %s\n", project, branch)
+		}
+
+		if len(args) > 0 || (currentFlag && project != "") {
+			if project == "" {
+				project = args[0]
+			}
+			fmt.Printf("Looking up project: %s\n", project)
 			projectFound, err := apiClient.FetchProjectByName(project)
 			if err != nil {
 				log.Fatalf("Error: %v", err)
@@ -56,16 +68,18 @@ var deployCmd = &cobra.Command{
 			project = searchProject(projects)
 		}
 
-		if branchFlag != "" {
-			branch = branchFlag
-			fmt.Printf("Looking up branch passed as flag: %s\n", branch)
+		if branchFlag != "" || currentFlag {
+			if branch == "" {
+				branch = branchFlag
+			}
+			fmt.Printf("Looking up branch: %s\n", branch)
 			branchFound, err := apiClient.FetchBranchByName(project, branch)
 			if err != nil {
-				log.Fatalf("Error: %v", err)
+				log.Fatalf("Error: %v", err.Errors)
 			}
 			log.Println("Branch found.", branchFound.Name)
 			branch = branchFound.Name
-		} else {
+		} else if branch == "" {
 			branches, err := apiClient.FetchBranches(project)
 			if err != nil {
 				log.Fatalf("Error fetching branches: %v", err)
@@ -90,9 +104,13 @@ var deployCmd = &cobra.Command{
 			pipeline = searchPipeline(pipelines, branch)
 		}
 
-		if pipeline.Name == "CD" && branch != "master" {
+		if pipeline.Name == config.Protected.Pipeline {
 			red := color.New(color.FgRed).SprintFunc()
-			fmt.Println(red("Error: Only the 'master' branch can be deployed to the production pipeline."))
+			log.Fatalf(red("Error: Unable to deploy protected pipeline: %s"), config.Protected.Pipeline)
+			return
+		} else if branch == config.Protected.Branch {
+			red := color.New(color.FgRed).SprintFunc()
+			log.Fatalf(red("Error: Unable to deploy protected branch: %s"), config.Protected.Branch)
 			return
 		}
 
@@ -163,7 +181,7 @@ func init() {
 	// Add branch and pipeline flags
 	deployCmd.Flags().StringVarP(&branchFlag, "branch", "b", "", "Branch to deploy")
 	deployCmd.Flags().StringVarP(&pipelineFlag, "pipeline", "p", "", "Pipeline to deploy (production or staging)")
-
+	deployCmd.Flags().BoolVarP(&currentFlag, "current", "c", false, "Use the current Git branch for deployment")
 	rootCmd.AddCommand(deployCmd)
 }
 

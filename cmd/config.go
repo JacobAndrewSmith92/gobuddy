@@ -13,10 +13,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// Configuration structure
 type Config struct {
-	Token     string `json:"token"`
-	Workspace string `json:"workspace"`
+	Token     string    `json:"token"`
+	Workspace string    `json:"workspace"`
+	Protected Protected `json:"protected,omitempty"`
+}
+
+type Protected struct {
+	Pipeline string `json:"pipeline,omitempty"`
+	Branch   string `json:"branch,omitempty"`
 }
 
 var configFilePath = filepath.Join(os.Getenv("HOME"), ".gobuddy_config.json")
@@ -29,9 +34,9 @@ var configCmd = &cobra.Command{
 }
 
 var configSetCmd = &cobra.Command{
-	Use:   "set [token|workspace] [value]",
-	Short: "Set or update your token and workspace",
-	Long:  `This subcommand allows you to set or update your authorization token and workspace. Pass "token" or "workspace" followed by the value to update.`,
+	Use:   "set [token|workspace|protected.*] [value]",
+	Short: "Set or update your configuration",
+	Long:  `This subcommand allows you to set or update your authorization token, workspace, and a protected branch and pipeline. Pass "token", "workspace", "protected_pipeline" or "protected_branch" followed by the value to update.`,
 	Args:  cobra.MinimumNArgs(0), // No minimum args; prompts if args are missing
 	Run: func(_ *cobra.Command, args []string) {
 		setConfigFromArgs(args)
@@ -57,6 +62,8 @@ var configGetCmd = &cobra.Command{
 		fmt.Println(bold("Current Configuration:"))
 		fmt.Printf("Token: %s\n", cyan(config.Token))
 		fmt.Printf("Workspace: %s\n", cyan(config.Workspace))
+		fmt.Printf("Protected Branch: %s\n", cyan(config.Protected.Branch))
+		fmt.Printf("Protected Pipeline: %s\n", cyan(config.Protected.Pipeline))
 	},
 }
 
@@ -129,7 +136,7 @@ func handleMissingConfig() {
 	}
 
 	if result == "yes" {
-		setConfig("", "")
+		setConfig("", "", "", "")
 	} else {
 		fmt.Println("No configuration created.")
 	}
@@ -157,12 +164,18 @@ func setConfigFromArgs(args []string) {
 		case "workspace":
 			config.Workspace = value
 			fmt.Printf("Workspace updated to: %s\n", yellow(value))
+		case "protected_pipeline":
+			config.Protected.Pipeline = value
+			fmt.Printf("Protected Pipeline updated to: %s\n", yellow(value))
+		case "protected_branch":
+			config.Protected.Branch = value
+			fmt.Printf("Protected Branch updated to: %s\n", yellow(value))
 		default:
 			log.Fatalf("Invalid argument: %s. Use 'token' or 'workspace'.", key)
 		}
 	} else if len(args) == 0 {
 		// Prompt for both token and workspace if no args are provided
-		setConfig("", "")
+		setConfig("", "", "", "")
 		return
 	} else {
 		log.Fatalf("Invalid number of arguments. You must provide a key (token|workspace) and a value.")
@@ -173,7 +186,7 @@ func setConfigFromArgs(args []string) {
 }
 
 // Prompt-based configuration setup
-func setConfig(tokenFlag, workspaceFlag string) {
+func setConfig(tokenFlag, workspaceFlag, protectedBranchFlag, protectedPipelineFlag string) {
 	config, err := loadConfig()
 	if err != nil && !os.IsNotExist(err) {
 		log.Fatalf("Failed to load existing config: %v\n", err)
@@ -183,10 +196,12 @@ func setConfig(tokenFlag, workspaceFlag string) {
 	green := color.New(color.FgGreen).SprintFunc()
 
 	// Prompt for token if not provided
-	if tokenFlag == "" && config.Token == "" {
+	if tokenFlag == "" {
+		log.Printf("Current Token: %s\n", config.Token)
 		tokenPrompt := promptui.Prompt{
-			Label: yellow("Enter your Buddy API token"),
-			Mask:  '*',
+			Label:   yellow("Enter your Buddy API token"),
+			Mask:    '*',
+			Default: config.Token,
 		}
 		token, err := tokenPrompt.Run()
 		if err != nil {
@@ -196,15 +211,43 @@ func setConfig(tokenFlag, workspaceFlag string) {
 	}
 
 	// Prompt for workspace if not provided
-	if workspaceFlag == "" && config.Workspace == "" {
+	if workspaceFlag == "" {
+		log.Printf("Current Workspace: %s\n", config.Workspace)
 		workspacePrompt := promptui.Prompt{
-			Label: yellow("Enter your Buddy workspace"),
+			Label:   yellow("Enter your Buddy workspace"),
+			Default: config.Workspace,
 		}
 		workspace, err := workspacePrompt.Run()
 		if err != nil {
 			log.Fatalf("Failed to read workspace: %v\n", err)
 		}
 		config.Workspace = workspace
+	}
+
+	if protectedBranchFlag == "" {
+		log.Printf("Current Protected Branch: %s\n", config.Protected.Branch)
+		branchPrompt := promptui.Prompt{
+			Label:   yellow("Enter the branch you want to protect"),
+			Default: config.Protected.Branch,
+		}
+		branch, err := branchPrompt.Run()
+		if err != nil {
+			log.Fatalf("Failed to read branch: %v\n", err)
+		}
+		config.Protected.Branch = branch
+	}
+
+	if protectedPipelineFlag == "" {
+		log.Printf("Current Protected Pipeline: %s\n", config.Protected.Pipeline)
+		pipelinePrompt := promptui.Prompt{
+			Label:   yellow("Enter the pipeline you want to protect"),
+			Default: config.Protected.Pipeline,
+		}
+		pipeline, err := pipelinePrompt.Run()
+		if err != nil {
+			log.Fatalf("Failed to read pipeline: %v\n", err)
+		}
+		config.Protected.Pipeline = pipeline
 	}
 
 	saveConfig(config)

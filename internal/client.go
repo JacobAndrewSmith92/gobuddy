@@ -168,21 +168,11 @@ func (c *BuddyClient) FetchBranchByName(project, branch string) (*Branch, *Error
 
 	defer resp.Body.Close()
 
-	if resp.StatusCode == http.StatusNotFound {
-		return nil, &ErrorResponse{
-			Errors: []ErrorDetail{
-				{
-					Message: fmt.Sprintf("Branch %s not found in project %s", branch, project),
-				},
-			},
-		}
-	}
-
 	if resp.StatusCode != http.StatusOK {
 		return nil, &ErrorResponse{
 			Errors: []ErrorDetail{
 				{
-					Message: fmt.Sprintf("Error fetching branch: %s", resp.Status),
+					Message: fmt.Sprintf("Branch %s not found in project %s", branch, project),
 				},
 			},
 		}

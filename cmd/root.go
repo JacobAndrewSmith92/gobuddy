@@ -17,6 +17,7 @@ var rootCmd = &cobra.Command{
 	It allows users to manage and run pipelines for continuous integration (CI) and continuous deployment (CD).
 	With this tool, you can easily deploy to staging or production environments, ensuring a smooth and automated
 	workflow for your development and deployment processes.`,
+	Version: "1.1.0",
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
