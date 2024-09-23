@@ -41,6 +41,8 @@ $ gobuddy config get
 Current Configuration:
 Token: a-valid-token
 Workspace: fizzbuzz
+Protected Branch: master
+Protected Pipeline: Deploy to Production
 ```
 
 **`set`** (if one does not exist)
@@ -50,6 +52,8 @@ $ gobuddy config set
 
 Enter your Buddy API token: ********
 Enter your Buddy workspace: foobar
+Enter the branch you want to protect: some-branch
+Enter the pipeline you want to protect: some-pipeline
 ```
 
 **`set <key> <value>`**
@@ -57,6 +61,8 @@ Enter your Buddy workspace: foobar
 One of:
 - `token`
 - `workspace`
+- `protected_branch`
+- `protected_pipeline`
 
 ```bash
 $ gobuddy config set token some-value
@@ -90,6 +96,8 @@ This command allows you to trigger a deployment pipeline for your project using 
 | `<project>` | `argument` | Pass the project name (repo) you want to deploy  |`false`|
 | `-b or --branch` |`flag`| Pass this flag followed by a value if you want to specify your own git branch | `false`|
 |`-p or --pipeline`|`flag`| Pass this flag followed by a value if you want to specify your own pipeline ID |`false`|
+|`-c or --current`|`flag`| Pass this flag if you want to use the current branch of the directory |`false`|
+
 
 #### Interactive
 If you don’t pass all arguments and flags, Go Buddy will pick up where you left off and guide you through some interactive steps:
@@ -115,7 +123,7 @@ $ gobuddy deploy project-foobar -b fizz-buzz
 
 **Running with all flags passed**
 ```bash
-$ gobuddy deploy project-foobar -b fizz-buzz -p 12345
+$ gobuddy deploy project-foobar -c -b fizz-buzz -p 12345
 ```
 
 ### Check Pipeline Status
