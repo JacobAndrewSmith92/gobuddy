@@ -199,7 +199,7 @@ func setConfig(tokenFlag, workspaceFlag, protectedBranchFlag, protectedPipelineF
 	if tokenFlag == "" {
 		log.Printf("Current Token: %s\n", config.Token)
 		tokenPrompt := promptui.Prompt{
-			Label:   yellow("Enter your Buddy API token"),
+			Label:   yellow("Enter your Buddy API token. (Press enter to skip)"),
 			Mask:    '*',
 			Default: config.Token,
 		}
@@ -207,7 +207,13 @@ func setConfig(tokenFlag, workspaceFlag, protectedBranchFlag, protectedPipelineF
 		if err != nil {
 			log.Fatalf("Failed to read token: %v\n", err)
 		}
-		config.Token = token
+
+		if token == "" {
+			log.Println(`Looks like you didn't provide a token. Need one?`)
+			log.Println(`Here's how to create one: https://buddy.works/docs/api/getting-started/oauth2/personal-access-token`)
+		} else {
+			config.Token = token
+		}
 	}
 
 	// Prompt for workspace if not provided
