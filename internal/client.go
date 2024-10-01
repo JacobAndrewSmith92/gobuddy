@@ -1,5 +1,7 @@
-// buddy/client.go
-
+/*
+Package buddy provides a client for interacting with the Buddy API.
+The available methods allow fetching projects, branches, pipelines, and executing pipelines.
+*/
 package buddy
 
 import (

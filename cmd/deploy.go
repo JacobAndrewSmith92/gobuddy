@@ -1,3 +1,10 @@
+/*
+Package cmd is used for handling the deployment of a project using the Buddy API.
+The user can deploy a project interactively by selecting a project, branch, and pipeline.
+And can also be used for handling the configuration of the Buddy API token, workspace, protected
+branches and pipelines. The user can set, get, or reset the configuration using the `config` command.
+The configuration is stored in a JSON file located at ~/.gobuddy_config.json.
+*/
 package cmd
 
 import (
