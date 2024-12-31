@@ -115,9 +115,9 @@ var deployCmd = &cobra.Command{
 			red := color.New(color.FgRed).SprintFunc()
 			log.Fatalf(red("Error: Unable to deploy protected pipeline: %s"), config.Protected.Pipeline)
 			return
-		} else if branch == config.Protected.Branch {
+		} else if branch == config.Protected.Branch && pipeline.Name == config.Protected.Pipeline {
 			red := color.New(color.FgRed).SprintFunc()
-			log.Fatalf(red("Error: Unable to deploy protected branch: %s"), config.Protected.Branch)
+			log.Fatalf(red("Error: Unable to deploy protected branch: %s and protected pipeline: %s"), config.Protected.Branch, config.Protected.Pipeline)
 			return
 		}
 
