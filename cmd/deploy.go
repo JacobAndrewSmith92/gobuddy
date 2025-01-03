@@ -15,6 +15,7 @@ import (
 
 	buddy "github.com/JacobAndrewSmith92/gobuddy/internal"
 	"github.com/JacobAndrewSmith92/gobuddy/internal/util"
+	"github.com/briandowns/spinner"
 	"github.com/fatih/color"
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
@@ -146,14 +147,15 @@ var deployCmd = &cobra.Command{
 		log.Printf("Pipeline execution successfully! \nTriggered On: %s\nStatus: %s\n", cyan(execution.TriggeredOn), cyan(execution.Status))
 		log.Printf("Executed By: %s\n", cyan(execution.Creator.Name))
 		log.Printf("Checkout the execution at: %s", cyan(execution.HTMLURL))
-
-		for {
-			ok, err := checkStatus()
-			if err != nil {
-				log.Printf("Unable to check status: %v\n Checkout the pipeline: %s", err, execution.Pipeline.URL)
-			}
-
-			if ok {
+		ok, err := checkStatus()
+		if err != nil {
+			log.Printf("Unable to check status: %v\n Checkout the pipeline: %s", err, execution.Pipeline.URL)
+			return
+		}
+		s := spinner.New(spinner.CharSets[7], 100*time.Millisecond)
+		if ok {
+			s.Start()
+			for {
 				status, err := apiClient.CheckPipelineStatus(project, pipeline.ID, execution.ID)
 				if err != nil {
 					log.Printf("Error: %v", err)
@@ -164,22 +166,25 @@ var deployCmd = &cobra.Command{
 				failed := color.New(color.FgRed).SprintFunc()
 
 				if *status == "SUCCESSFUL" {
+					s.Stop()
 					log.Printf("Current status: %s", success(*status))
 					log.Println("Goodbye!")
 					break
 				} else if *status == "INPROGRESS" {
+
 					log.Printf("Current status: %s", inProgress(*status))
-					log.Printf("\nWaiting...")
-					time.Sleep(7 * time.Second) // Adjust the sleep duration as needed
+					time.Sleep(20 * time.Second) // Adjust the sleep duration as needed
 				} else if *status == "FAILED" {
+					s.Stop()
 					log.Printf("Current status: %s", failed(*status))
 					log.Println("Goodbye!")
 					break
 				}
-			} else {
-				log.Println("Goodbye!")
-				break
 			}
+		} else {
+			s.Stop()
+			log.Println("Goodbye!")
+			return
 		}
 	},
 }
