@@ -189,11 +189,60 @@ var deployCmd = &cobra.Command{
 	},
 }
 
+// statusCmd represents the status subcommand
+var statusCmd = &cobra.Command{
+	Use:   "status",
+	Short: "Check the status of the last deployment",
+	Long:  `This subcommand allows you to check the status of the last deployment, including the time it happened and who triggered it.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		var pipeline buddy.Pipeline
+		config, err := loadConfig()
+		if err != nil {
+			log.Fatalf("Failed to load configuration: %v\n", err)
+		}
+
+		apiClient := buddy.NewBuddyClient(config.Token, config.Workspace)
+
+		projects, err := apiClient.FetchProjects()
+		if err != nil {
+			log.Fatalf("Error fetching projects 2: %v", err)
+		}
+		project := searchProject(projects)
+
+		pipelines, err := apiClient.FetchPipelines(project)
+		if err != nil {
+			log.Fatalf("Error fetching pipelines: %v", err)
+		}
+		pipeline = searchPipeline(pipelines, "")
+
+		executions, err := apiClient.FetchExecutions(project, pipeline.ID)
+		if err != nil {
+			log.Fatalf("Error fetching executions: %v", err)
+		}
+		if len(executions.Executions) == 0 {
+			log.Fatalln("No executions found")
+		}
+		lastExecution := executions.Executions[0]
+
+		c := color.New(color.FgHiWhite, color.Bold)
+		bg := c.Add(color.BgHiGreen).SprintFunc()
+
+		fmt.Printf("Last deployment status: %s\n", bg(lastExecution.Status))
+		fmt.Printf("Last deployment was triggered on: %s\n", bg(convertToLocalTime(lastExecution.StartDate)))
+		fmt.Printf("Last deployment completed on: %s\n", bg(convertToLocalTime(lastExecution.FinishDate)))
+		fmt.Printf("Last deployment was triggered by: %s\n", bg(lastExecution.Creator.Name))
+	},
+}
+
 func init() {
 	// Add branch and pipeline flags
 	deployCmd.Flags().StringVarP(&branchFlag, "branch", "b", "", "Branch to deploy")
 	deployCmd.Flags().StringVarP(&pipelineFlag, "pipeline", "p", "", "Pipeline to deploy (production or staging)")
 	deployCmd.Flags().BoolVarP(&currentFlag, "current", "c", false, "Use the current Git branch for deployment")
+
+	// Add the status subcommand to the deploy command
+	deployCmd.AddCommand(statusCmd)
+
 	rootCmd.AddCommand(deployCmd)
 }
 
@@ -344,4 +393,15 @@ func checkStatus() (bool, error) {
 // Helper function to do case-insensitive search
 func containsIgnoreCase(str, substr string) bool {
 	return strings.Contains(strings.ToLower(str), strings.ToLower(substr))
+}
+
+func convertToLocalTime(utcTime string) string {
+	// Parse the time string
+	t, err := time.Parse(time.RFC3339, utcTime)
+	if err != nil {
+		log.Fatalf("Error parsing time: %v", err)
+	}
+	// Convert to local time
+	localTime := t.Local()
+	return localTime.Format(time.RFC1123)
 }

@@ -355,3 +355,39 @@ func (c *BuddyClient) CheckPipelineStatus(project string, pipeline int, executio
 
 	return &executionResponse.Status, nil
 }
+
+// FetchExecutions fetches the executions of a pipeline
+func (c *BuddyClient) FetchExecutions(project string, pipelineID int) (*ExecutionsResponse, error) {
+	client := &http.Client{}
+	url := fmt.Sprintf("https://api.buddy.works/workspaces/%s/projects/%s/pipelines/%d/executions", c.Workspace, project, pipelineID)
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.Token))
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("error fetching pipelines: %s", resp.Status)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	var executionsResponse ExecutionsResponse
+	err = json.Unmarshal(body, &executionsResponse)
+	if err != nil {
+		return nil, err
+	}
+
+	return &executionsResponse, nil
+}

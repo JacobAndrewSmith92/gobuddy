@@ -50,12 +50,15 @@ type PipelineResponse struct {
 
 // Pipeline struct to represent an individual Git branch
 type Pipeline struct {
-	URL      string   `json:"url"`
-	HTMLURL  string   `json:"html_url"`
-	ID       int      `json:"id"`
-	Name     string   `json:"name"`
-	Priority string   `json:"priority,omitempty"`
-	Refs     []string `json:"refs,omitempty"`
+	URL                 string   `json:"url"`
+	HTMLURL             string   `json:"html_url"`
+	ID                  int      `json:"id"`
+	Name                string   `json:"name"`
+	Priority            string   `json:"priority,omitempty"`
+	Refs                []string `json:"refs,omitempty"`
+	LastExecutionStatus string   `json:"last_execution_status,omitempty"`
+	CreateDate          string   `json:"create_date,omitempty"`
+	Creator             Creator  `json:"creator,omitempty"`
 }
 
 // Committer represents the committer object
@@ -117,6 +120,34 @@ type PipelineExecutionResponse struct {
 	Creator      Creator  `json:"creator"`
 	Pipeline     Pipeline `json:"pipeline"`
 	// ActionExecutions []ActionExecution `json:"action_executions"`
+}
+
+type ExecutionsResponse struct {
+	URL               string      `json:"url"`
+	Page              int         `json:"page"`
+	PageSize          int         `json:"page_size"`
+	TotalPageCount    int         `json:"total_page_count"`
+	ElementCount      int         `json:"element_count"`
+	TotalElementCount int         `json:"total_element_count"`
+	Executions        []Execution `json:"executions"`
+}
+
+type Execution struct {
+	URL          string   `json:"url"`
+	HTMLURL      string   `json:"html_url"`
+	ID           int      `json:"id"`
+	StartDate    string   `json:"start_date"`
+	FinishDate   string   `json:"finish_date"`
+	TriggeredOn  string   `json:"triggered_on"`
+	Priority     string   `json:"priority"`
+	Refresh      bool     `json:"refresh"`
+	ClearCache   bool     `json:"clear_cache"`
+	Status       string   `json:"status"`
+	Comment      string   `json:"comment"`
+	Branch       Branch   `json:"branch"`
+	FromRevision Revision `json:"from_revision"`
+	ToRevision   Revision `json:"to_revision"`
+	Creator      Creator  `json:"creator"`
 }
 
 type ErrorDetail struct {
